@@ -26,6 +26,7 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchProducts();
   }, []);
 
