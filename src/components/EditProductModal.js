@@ -37,16 +37,16 @@ export default function EditProductModal({ product, onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden mt-10 mb-10">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-900">Edit Product</h2>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto">
           {error && (
             <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
               {error}

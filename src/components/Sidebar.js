@@ -1,11 +1,11 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { LayoutDashboard, LogOut, PackagePlus } from "lucide-react";
+import { LayoutDashboard, LogOut, PackagePlus, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Sidebar() {
+export default function Sidebar({ closeMobileMenu }) {
   const { logout, user } = useAuth();
   const pathname = usePathname();
 
@@ -19,10 +19,15 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="w-64 bg-white shadow-[1px_0_10px_rgba(0,0,0,0.05)] flex flex-col justify-between h-full z-10 relative">
+    <div className="w-72 md:w-64 bg-white shadow-[1px_0_10px_rgba(0,0,0,0.05)] flex flex-col justify-between h-full z-10 relative">
       <div>
-        <div className="h-16 flex items-center px-6 border-b border-gray-100">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">Admin Panel</h1>
+          {closeMobileMenu && (
+            <button onClick={closeMobileMenu} className="md:hidden p-2 -mr-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
+              <X size={20} />
+            </button>
+          )}
         </div>
         <nav className="p-4 space-y-1.5">
           {menuItems.map((item) => {
@@ -31,7 +36,8 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center space-x-3 px-4 py-2.5 rounded-md transition-all duration-200 ${
+                onClick={closeMobileMenu}
+                className={`flex items-center space-x-3 px-4 py-3 md:py-2.5 rounded-md transition-all duration-200 ${
                   isActive
                     ? "bg-blue-50 text-blue-700 font-medium"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"

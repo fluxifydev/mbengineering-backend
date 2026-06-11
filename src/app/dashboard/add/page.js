@@ -50,8 +50,8 @@ export default function AddProduct() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
           {error && (
             <div className="p-4 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
               {error}
