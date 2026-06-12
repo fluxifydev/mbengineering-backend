@@ -16,11 +16,14 @@ export async function uploadToCloudinary(formData, folder) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const resourceType = isPdf ? 'raw' : 'auto';
+
     const url = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         { 
           folder: folder,
-          resource_type: "auto" 
+          resource_type: resourceType 
         },
         (error, result) => {
           if (error) {
