@@ -29,13 +29,14 @@ const promiseWithTimeout = (promise, ms, message) => {
   ]);
 };
 
-export const addProduct = async (productData, imageFile, brochureFile) => {
+export const addProduct = async (productData, imageFiles, brochureFile) => {
   try {
-    let imageUrl = null;
+    let imageUrls = [];
     let brochureUrl = null;
 
-    if (imageFile) {
-      imageUrl = await uploadFile(imageFile, "product_images");
+    if (imageFiles && imageFiles.length > 0) {
+      const uploadPromises = imageFiles.map(file => uploadFile(file, "product_images"));
+      imageUrls = await Promise.all(uploadPromises);
     }
     if (brochureFile) {
       brochureUrl = await uploadFile(brochureFile, "product_brochures");
@@ -43,7 +44,7 @@ export const addProduct = async (productData, imageFile, brochureFile) => {
 
     const docPromise = addDoc(collection(db, COLLECTION_NAME), {
       ...productData,
-      imageUrl,
+      imageUrls,
       brochureUrl,
       createdAt: serverTimestamp(),
     });
@@ -76,14 +77,24 @@ export const getProducts = async () => {
   }
 };
 
-export const updateProduct = async (id, productData, newImageFile, newBrochureFile, oldImageUrl, oldBrochureUrl) => {
+export const updateProduct = async (id, productData, newImageFiles, newBrochureFile, remainingImageUrls, oldBrochureUrl, deletedImageUrls) => {
   try {
     const updateData = { ...productData };
 
-    if (newImageFile) {
-      updateData.imageUrl = await uploadFile(newImageFile, "product_images");
-      if (oldImageUrl) await deleteFromCloudinary(oldImageUrl);
+    let imageUrls = [...(remainingImageUrls || [])];
+
+    if (deletedImageUrls && deletedImageUrls.length > 0) {
+      const deletePromises = deletedImageUrls.map(url => deleteFromCloudinary(url));
+      await Promise.all(deletePromises);
     }
+
+    if (newImageFiles && newImageFiles.length > 0) {
+      const uploadPromises = newImageFiles.map(file => uploadFile(file, "product_images"));
+      const newUrls = await Promise.all(uploadPromises);
+      imageUrls = [...imageUrls, ...newUrls];
+    }
+    
+    updateData.imageUrls = imageUrls;
 
     if (newBrochureFile) {
       updateData.brochureUrl = await uploadFile(newBrochureFile, "product_brochures");
@@ -104,13 +115,16 @@ export const updateProduct = async (id, productData, newImageFile, newBrochureFi
   }
 };
 
-export const deleteProduct = async (id, imageUrl, brochureUrl) => {
+export const deleteProduct = async (id, imageUrls, brochureUrl) => {
   try {
     const productRef = doc(db, COLLECTION_NAME, id);
     await deleteDoc(productRef);
 
     // Delete files from Cloudinary
-    if (imageUrl) await deleteFromCloudinary(imageUrl);
+    if (imageUrls && imageUrls.length > 0) {
+      const deletePromises = imageUrls.map(url => deleteFromCloudinary(url));
+      await Promise.all(deletePromises);
+    }
     if (brochureUrl) await deleteFromCloudinary(brochureUrl);
   } catch (error) {
     console.error("Error deleting product:", error);

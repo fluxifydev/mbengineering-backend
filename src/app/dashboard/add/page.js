@@ -10,7 +10,22 @@ export default function AddProduct() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [specifications, setSpecifications] = useState([{ key: "", value: "" }]);
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (imageFiles.length + files.length > 5) {
+      alert("You can only upload a maximum of 5 images.");
+      return;
+    }
+    setImageFiles([...imageFiles, ...files]);
+  };
+
+  const handleRemoveImage = (index) => {
+    const newFiles = [...imageFiles];
+    newFiles.splice(index, 1);
+    setImageFiles(newFiles);
+  };
 
   const handleAddSpec = () => {
     if (specifications.length < 18) {
@@ -44,7 +59,7 @@ export default function AddProduct() {
       const cleanedSpecs = specifications.filter(s => s.key.trim() !== "" || s.value.trim() !== "");
       await addProduct(
         { name, description, specifications: cleanedSpecs },
-        imageFile,
+        imageFiles,
         brochureFile
       );
       router.push("/dashboard");
@@ -155,24 +170,38 @@ export default function AddProduct() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Product Image</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-semibold text-gray-700">Product Images</label>
+                <span className="text-xs text-gray-500">{imageFiles.length} / 5</span>
+              </div>
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors">
                 <UploadCloud className="mx-auto h-12 w-12 text-gray-400 mb-3" />
                 <div className="flex text-sm text-gray-600 justify-center">
                   <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                    <span>Upload a file</span>
+                    <span>Upload files</span>
                     <input 
                       type="file" 
                       className="sr-only" 
                       accept="image/*"
-                      onChange={(e) => setImageFile(e.target.files[0])}
+                      multiple
+                      onChange={handleImageChange}
+                      disabled={imageFiles.length >= 5}
                     />
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 10MB</p>
-                {imageFile && (
-                  <p className="mt-3 text-sm font-medium text-blue-600 truncate bg-blue-50 py-1 px-2 rounded">{imageFile.name}</p>
+                {imageFiles.length > 0 && (
+                  <div className="mt-4 space-y-2 text-left">
+                    {imageFiles.map((file, index) => (
+                      <div key={index} className="flex justify-between items-center bg-blue-50 py-2 px-3 rounded text-sm font-medium text-blue-700">
+                        <span className="truncate mr-2">{file.name}</span>
+                        <button type="button" onClick={() => handleRemoveImage(index)} className="text-blue-400 hover:text-blue-600">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

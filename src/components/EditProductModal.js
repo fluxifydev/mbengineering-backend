@@ -13,7 +13,35 @@ export default function EditProductModal({ product, onClose, onSave }) {
       : [{ key: "", value: "" }]
   );
   
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [remainingImageUrls, setRemainingImageUrls] = useState(
+    product.imageUrls ? [...product.imageUrls] : (product.imageUrl ? [product.imageUrl] : [])
+  );
+  const [deletedImageUrls, setDeletedImageUrls] = useState([]);
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (remainingImageUrls.length + imageFiles.length + files.length > 5) {
+      alert("You can only have a maximum of 5 images.");
+      return;
+    }
+    setImageFiles([...imageFiles, ...files]);
+  };
+
+  const handleRemoveNewImage = (index) => {
+    const newFiles = [...imageFiles];
+    newFiles.splice(index, 1);
+    setImageFiles(newFiles);
+  };
+
+  const handleRemoveExistingImage = (index) => {
+    const urlToRemove = remainingImageUrls[index];
+    setDeletedImageUrls([...deletedImageUrls, urlToRemove]);
+    
+    const newRemaining = [...remainingImageUrls];
+    newRemaining.splice(index, 1);
+    setRemainingImageUrls(newRemaining);
+  };
 
   const handleAddSpec = () => {
     if (specifications.length < 18) {
@@ -47,10 +75,11 @@ export default function EditProductModal({ product, onClose, onSave }) {
       await updateProduct(
         product.id,
         { name, description, specifications: cleanedSpecs },
-        imageFile,
+        imageFiles,
         brochureFile,
-        product.imageUrl,
-        product.brochureUrl
+        remainingImageUrls,
+        product.brochureUrl,
+        deletedImageUrls
       );
       onSave(); // Refresh list and close
     } catch (err) {
@@ -151,16 +180,47 @@ export default function EditProductModal({ product, onClose, onSave }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Update Image</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-semibold text-gray-700">Update Images</label>
+                <span className="text-xs text-gray-500">{remainingImageUrls.length + imageFiles.length} / 5</span>
+              </div>
+              
+              {remainingImageUrls.length > 0 && (
+                <div className="mb-3 space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase">Current Images</p>
+                  {remainingImageUrls.map((url, index) => (
+                    <div key={index} className="flex justify-between items-center bg-white border border-gray-200 py-1.5 px-3 rounded text-sm font-medium text-gray-700">
+                      <span className="truncate mr-2 text-xs">{url.substring(0, 30)}...</span>
+                      <button type="button" onClick={() => handleRemoveExistingImage(index)} className="text-gray-400 hover:text-red-600">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {imageFiles.length > 0 && (
+                <div className="mb-3 space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase">New Images</p>
+                  {imageFiles.map((file, index) => (
+                    <div key={index} className="flex justify-between items-center bg-blue-50 border border-blue-100 py-1.5 px-3 rounded text-sm font-medium text-blue-700">
+                      <span className="truncate mr-2 text-xs">{file.name}</span>
+                      <button type="button" onClick={() => handleRemoveNewImage(index)} className="text-blue-400 hover:text-blue-600">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files[0])}
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
+                multiple
+                disabled={remainingImageUrls.length + imageFiles.length >= 5}
+                onChange={handleImageChange}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors disabled:opacity-50"
               />
-              {product.imageUrl && !imageFile && (
-                <p className="text-xs text-gray-500 mt-2 truncate">Current: {product.imageUrl.substring(0, 30)}...</p>
-              )}
             </div>
 
             <div className="p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">

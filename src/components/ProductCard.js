@@ -1,13 +1,15 @@
 import { FileText, Pencil, Trash2 } from "lucide-react";
 
 export default function ProductCard({ product, onEdit, onDelete }) {
+  const primaryImage = product.imageUrls?.[0] || product.imageUrl;
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group flex flex-col h-full hover:-translate-y-1">
       <div className="relative h-56 w-full bg-gray-50 border-b border-gray-100">
-        {product.imageUrl ? (
+        {primaryImage ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
-            src={product.imageUrl}
+            src={primaryImage}
             alt={product.name}
             className="w-full h-full object-contain p-2"
           />
