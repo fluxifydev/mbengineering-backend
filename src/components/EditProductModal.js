@@ -1,17 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, UploadCloud, Plus, Trash2 } from "lucide-react";
 import { updateProduct } from "@/services/productService";
+import { getCategories } from "@/services/categoryService";
 
 export default function EditProductModal({ product, onClose, onSave }) {
   const [name, setName] = useState(product.name || "");
   const [description, setDescription] = useState(product.description || "");
+  const [category, setCategory] = useState(product.category || "");
+  const [subcategory, setSubcategory] = useState(product.subcategory || "");
   const [specifications, setSpecifications] = useState(
     Array.isArray(product.specifications) 
       ? (product.specifications.length > 0 ? product.specifications : [{ key: "", value: "" }]) 
       : [{ key: "", value: "" }]
   );
+  
+  const [categories, setCategories] = useState([]);
+  
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const cats = await getCategories();
+        setCategories(cats);
+      } catch (err) {
+        console.error("Failed to load categories", err);
+      }
+    };
+    fetchCats();
+  }, []);
+
+  const handleCategoryChange = (e) => {
+    setCategory(e.target.value);
+    setSubcategory(""); // Reset subcategory when category changes
+  };
+
+  const selectedCategoryObj = categories.find(c => c.name === category);
+  const availableSubcategories = selectedCategoryObj?.subcategories || [];
   
   const [imageFiles, setImageFiles] = useState([]);
   const [remainingImageUrls, setRemainingImageUrls] = useState(
@@ -82,7 +107,7 @@ export default function EditProductModal({ product, onClose, onSave }) {
       const cleanedSpecs = specifications.filter(s => s.key.trim() !== "" || s.value.trim() !== "");
       await updateProduct(
         product.id,
-        { name, description, specifications: cleanedSpecs },
+        { name, description, category, subcategory, specifications: cleanedSpecs },
         imageFiles,
         brochureFile,
         remainingImageUrls,
@@ -133,6 +158,37 @@ export default function EditProductModal({ product, onClose, onSave }) {
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 resize-none"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Category (Optional)</label>
+              <select
+                value={category}
+                onChange={handleCategoryChange}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 appearance-none bg-white"
+              >
+                <option value="">Select a Category</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Subcategory (Optional)</label>
+              <select
+                value={subcategory}
+                onChange={(e) => setSubcategory(e.target.value)}
+                disabled={!category || availableSubcategories.length === 0}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 appearance-none bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">Select a Subcategory</option>
+                {availableSubcategories.map((sub, i) => (
+                  <option key={i} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div>

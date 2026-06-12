@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { addProduct } from "@/services/productService";
+import { getCategories } from "@/services/categoryService";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, UploadCloud, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -9,8 +10,32 @@ import Link from "next/link";
 export default function AddProduct() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
   const [specifications, setSpecifications] = useState([{ key: "", value: "" }]);
   const [imageFiles, setImageFiles] = useState([]);
+  
+  const [categories, setCategories] = useState([]);
+  
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const cats = await getCategories();
+        setCategories(cats);
+      } catch (err) {
+        console.error("Failed to load categories", err);
+      }
+    };
+    fetchCats();
+  }, []);
+
+  const handleCategoryChange = (e) => {
+    setCategory(e.target.value);
+    setSubcategory(""); // Reset subcategory when category changes
+  };
+
+  const selectedCategoryObj = categories.find(c => c.name === category);
+  const availableSubcategories = selectedCategoryObj?.subcategories || [];
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -66,7 +91,7 @@ export default function AddProduct() {
     try {
       const cleanedSpecs = specifications.filter(s => s.key.trim() !== "" || s.value.trim() !== "");
       await addProduct(
-        { name, description, specifications: cleanedSpecs },
+        { name, description, category, subcategory, specifications: cleanedSpecs },
         imageFiles,
         brochureFile
       );
@@ -122,6 +147,37 @@ export default function AddProduct() {
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-900 resize-none"
               placeholder="Enter a detailed description of the machine..."
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category (Optional)</label>
+              <select
+                value={category}
+                onChange={handleCategoryChange}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-900 appearance-none"
+              >
+                <option value="">Select a Category</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Subcategory (Optional)</label>
+              <select
+                value={subcategory}
+                onChange={(e) => setSubcategory(e.target.value)}
+                disabled={!category || availableSubcategories.length === 0}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-900 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">Select a Subcategory</option>
+                {availableSubcategories.map((sub, i) => (
+                  <option key={i} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div>

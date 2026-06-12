@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deletingProduct, setDeletingProduct] = useState(null);
 
@@ -18,8 +19,10 @@ export default function Dashboard() {
     try {
       const data = await getProducts();
       setProducts(data);
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+      setError(err.message || "Failed to connect to Firebase. Check your Security Rules.");
     } finally {
       setLoading(false);
     }
@@ -57,6 +60,13 @@ export default function Dashboard() {
           Add Product
         </Link>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+          <h3 className="font-bold mb-1">Error Loading Products</h3>
+          <p>{error}</p>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center items-center h-64">

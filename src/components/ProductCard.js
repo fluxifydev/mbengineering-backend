@@ -20,6 +20,13 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         )}
       </div>
       <div className="p-6 flex-1 flex flex-col">
+        {product.category && (
+          <div className="mb-2">
+            <span className="inline-block bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
+              {product.category} {product.subcategory && <span className="text-blue-400 font-medium ml-1">/ {product.subcategory}</span>}
+            </span>
+          </div>
+        )}
         <h3 className="text-xl font-bold text-gray-900 mb-2 truncate" title={product.name}>
           {product.name}
         </h3>
