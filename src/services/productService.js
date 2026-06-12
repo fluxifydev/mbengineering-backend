@@ -10,7 +10,6 @@ import {
   orderBy, 
   query 
 } from "firebase/firestore";
-} from "firebase/firestore";
 import { uploadToCloudinary, deleteFromCloudinary } from "@/actions/cloudinary";
 
 const COLLECTION_NAME = "products";
