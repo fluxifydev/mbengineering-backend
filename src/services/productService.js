@@ -18,43 +18,55 @@ const COLLECTION_NAME = "products";
 
 // Helper to upload a file and get Cloudinary URL
 const uploadFile = async (file, folderPath, isRaw = false) => {
-  if (!file) return null;
+  return await promiseWithTimeout(
+    (async () => {
+      if (!file) return null;
 
-  if (isRaw) {
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const finalName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
-    
-    const storageRef = ref(storage, `${folderPath}/${uniqueSuffix}-${finalName}`);
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
-  }
+      if (isRaw) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const finalName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
+        
+        const storageRef = ref(storage, `${folderPath}/${uniqueSuffix}-${finalName}`);
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef);
+      }
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("isRaw", "false");
-  
-  const result = await uploadToCloudinary(formData, folderPath);
-  if (result?.error) {
-    throw new Error(result.error);
-  }
-  return result?.url || null;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("isRaw", "false");
+      
+      const result = await uploadToCloudinary(formData, folderPath);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result?.url || null;
+    })(),
+    15000,
+    "File upload timed out. Please try your connection."
+  );
 };
 
 const deleteFile = async (url) => {
   if (!url) return;
-  if (url.includes("firebasestorage.googleapis.com")) {
-    try {
-      // Create a reference from the download URL and delete it
-      const fileRef = ref(storage, url);
-      await deleteObject(fileRef);
-    } catch (err) {
-      console.error("Firebase Storage delete error:", err);
-    }
-  } else if (url.includes("cloudinary.com")) {
-    await deleteFromCloudinary(url);
-  }
+  return await promiseWithTimeout(
+    (async () => {
+      if (url.includes("firebasestorage.googleapis.com")) {
+        try {
+          const fileRef = ref(storage, url);
+          await deleteObject(fileRef);
+        } catch (err) {
+          console.error("Firebase Storage delete error:", err);
+        }
+      } else if (url.includes("cloudinary.com")) {
+        await deleteFromCloudinary(url);
+      }
+    })(),
+    10000,
+    "File deletion timed out."
+  );
 };
+
 
 const promiseWithTimeout = (promise, ms, message) => {
   return Promise.race([
