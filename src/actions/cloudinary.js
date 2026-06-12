@@ -16,8 +16,9 @@ export async function uploadToCloudinary(formData, folder) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const isRaw = formData.get("isRaw") === "true";
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const resourceType = isPdf ? 'raw' : 'auto';
+    const resourceType = (isRaw || isPdf) ? 'raw' : 'auto';
 
     const url = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(

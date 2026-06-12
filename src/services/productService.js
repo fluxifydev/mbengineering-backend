@@ -15,10 +15,11 @@ import { uploadToCloudinary, deleteFromCloudinary } from "@/actions/cloudinary";
 const COLLECTION_NAME = "products";
 
 // Helper to upload a file and get Cloudinary URL
-const uploadFile = async (file, folderPath) => {
+const uploadFile = async (file, folderPath, isRaw = false) => {
   if (!file) return null;
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("isRaw", isRaw ? "true" : "false");
   
   const result = await uploadToCloudinary(formData, folderPath);
   if (result?.error) {
@@ -46,12 +47,13 @@ export const addProduct = async (productData, imageFiles, brochureFile) => {
       }
     }
     if (brochureFile) {
-      brochureUrl = await uploadFile(brochureFile, "product_brochures");
+      brochureUrl = await uploadFile(brochureFile, "product_brochures", true);
     }
 
     const docPromise = addDoc(collection(db, COLLECTION_NAME), {
       ...productData,
       imageUrls,
+      imageUrl: imageUrls.length > 0 ? imageUrls[0] : null,
       brochureUrl,
       createdAt: serverTimestamp(),
     });
@@ -104,9 +106,10 @@ export const updateProduct = async (id, productData, newImageFiles, newBrochureF
     }
     
     updateData.imageUrls = imageUrls;
+    updateData.imageUrl = imageUrls.length > 0 ? imageUrls[0] : null;
 
     if (newBrochureFile) {
-      updateData.brochureUrl = await uploadFile(newBrochureFile, "product_brochures");
+      updateData.brochureUrl = await uploadFile(newBrochureFile, "product_brochures", true);
       if (oldBrochureUrl) await deleteFromCloudinary(oldBrochureUrl);
     }
 
