@@ -40,8 +40,10 @@ export const addProduct = async (productData, imageFiles, brochureFile) => {
     let brochureUrl = null;
 
     if (imageFiles && imageFiles.length > 0) {
-      const uploadPromises = imageFiles.map(file => uploadFile(file, "product_images"));
-      imageUrls = await Promise.all(uploadPromises);
+      for (const file of imageFiles) {
+        const url = await uploadFile(file, "product_images");
+        imageUrls.push(url);
+      }
     }
     if (brochureFile) {
       brochureUrl = await uploadFile(brochureFile, "product_brochures");
@@ -89,14 +91,16 @@ export const updateProduct = async (id, productData, newImageFiles, newBrochureF
     let imageUrls = [...(remainingImageUrls || [])];
 
     if (deletedImageUrls && deletedImageUrls.length > 0) {
-      const deletePromises = deletedImageUrls.map(url => deleteFromCloudinary(url));
-      await Promise.all(deletePromises);
+      for (const url of deletedImageUrls) {
+        await deleteFromCloudinary(url);
+      }
     }
 
     if (newImageFiles && newImageFiles.length > 0) {
-      const uploadPromises = newImageFiles.map(file => uploadFile(file, "product_images"));
-      const newUrls = await Promise.all(uploadPromises);
-      imageUrls = [...imageUrls, ...newUrls];
+      for (const file of newImageFiles) {
+        const url = await uploadFile(file, "product_images");
+        imageUrls.push(url);
+      }
     }
     
     updateData.imageUrls = imageUrls;
@@ -127,8 +131,9 @@ export const deleteProduct = async (id, imageUrls, brochureUrl) => {
 
     // Delete files from Cloudinary
     if (imageUrls && imageUrls.length > 0) {
-      const deletePromises = imageUrls.map(url => deleteFromCloudinary(url));
-      await Promise.all(deletePromises);
+      for (const url of imageUrls) {
+        await deleteFromCloudinary(url);
+      }
     }
     if (brochureUrl) await deleteFromCloudinary(brochureUrl);
   } catch (error) {
