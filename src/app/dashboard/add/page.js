@@ -14,6 +14,14 @@ export default function AddProduct() {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+    
+    for (let file of files) {
+      if (file.size > 4 * 1024 * 1024) {
+        alert(`Image "${file.name}" is larger than 4MB. Please select smaller images.`);
+        return;
+      }
+    }
+
     if (imageFiles.length + files.length > 5) {
       alert("You can only upload a maximum of 5 images.");
       return;
@@ -217,7 +225,14 @@ export default function AddProduct() {
                       type="file" 
                       className="sr-only" 
                       accept=".pdf"
-                      onChange={(e) => setBrochureFile(e.target.files[0])}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file && file.size > 4 * 1024 * 1024) {
+                          alert("Brochure is larger than 4MB. Please select a smaller PDF.");
+                          return;
+                        }
+                        setBrochureFile(file);
+                      }}
                     />
                   </label>
                   <p className="pl-1">or drag and drop</p>

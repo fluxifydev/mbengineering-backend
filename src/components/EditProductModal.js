@@ -21,6 +21,14 @@ export default function EditProductModal({ product, onClose, onSave }) {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+    
+    for (let file of files) {
+      if (file.size > 4 * 1024 * 1024) {
+        alert(`Image "${file.name}" is larger than 4MB. Please select smaller images.`);
+        return;
+      }
+    }
+
     if (remainingImageUrls.length + imageFiles.length + files.length > 5) {
       alert("You can only have a maximum of 5 images.");
       return;
@@ -228,7 +236,14 @@ export default function EditProductModal({ product, onClose, onSave }) {
               <input
                 type="file"
                 accept=".pdf"
-                onChange={(e) => setBrochureFile(e.target.files[0])}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file && file.size > 4 * 1024 * 1024) {
+                    alert("Brochure is larger than 4MB. Please select a smaller PDF.");
+                    return;
+                  }
+                  setBrochureFile(file);
+                }}
                 className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors"
               />
               {product.brochureUrl && !brochureFile && (
