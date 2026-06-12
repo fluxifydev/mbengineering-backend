@@ -42,8 +42,8 @@ const uploadFile = async (file, folderPath, isRaw = false) => {
       }
       return result?.url || null;
     })(),
-    15000,
-    "File upload timed out. Please try your connection."
+    60000,
+    "File upload timed out (took longer than 60 seconds). Please check your internet connection or try a smaller file."
   );
 };
 
@@ -62,7 +62,7 @@ const deleteFile = async (url) => {
         await deleteFromCloudinary(url);
       }
     })(),
-    10000,
+    30000,
     "File deletion timed out."
   );
 };
