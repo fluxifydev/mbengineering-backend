@@ -19,7 +19,12 @@ const uploadFile = async (file, folderPath) => {
   if (!file) return null;
   const formData = new FormData();
   formData.append("file", file);
-  return await uploadToCloudinary(formData, folderPath);
+  
+  const result = await uploadToCloudinary(formData, folderPath);
+  if (result?.error) {
+    throw new Error(result.error);
+  }
+  return result?.url || null;
 };
 
 const promiseWithTimeout = (promise, ms, message) => {

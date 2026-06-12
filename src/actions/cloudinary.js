@@ -9,30 +9,36 @@ cloudinary.config({
 });
 
 export async function uploadToCloudinary(formData, folder) {
-  const file = formData.get('file');
-  if (!file) return null;
+  try {
+    const file = formData.get('file');
+    if (!file) return { error: "No file provided" };
 
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { 
-        folder: folder,
-        resource_type: "auto" 
-      },
-      (error, result) => {
-        if (error) {
-          console.error("Cloudinary upload error:", error);
-          reject(error.message);
-        } else {
-          resolve(result.secure_url);
+    const url = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { 
+          folder: folder,
+          resource_type: "auto" 
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result.secure_url);
+          }
         }
-      }
-    );
-    
-    uploadStream.end(buffer);
-  });
+      );
+      
+      uploadStream.end(buffer);
+    });
+
+    return { url };
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    return { error: error.message || "Cloudinary upload failed" };
+  }
 }
 
 export async function deleteFromCloudinary(url) {
