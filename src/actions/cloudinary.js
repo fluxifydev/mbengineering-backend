@@ -32,9 +32,12 @@ export async function uploadToCloudinary(formData, folder) {
       uploadOptions.public_id = `${uniqueSuffix}-${finalName}`;
     }
 
+    // Extract the actual base64 payload
+    const base64Data = dataUri.includes(',') ? dataUri.split(',')[1] : dataUri;
+    const buffer = Buffer.from(base64Data, 'base64');
+
     const url = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload(
-        dataUri,
+      const uploadStream = cloudinary.uploader.upload_stream(
         uploadOptions,
         (error, result) => {
           if (error) {
@@ -44,6 +47,8 @@ export async function uploadToCloudinary(formData, folder) {
           }
         }
       );
+      
+      uploadStream.end(buffer);
     });
 
     return { url };
