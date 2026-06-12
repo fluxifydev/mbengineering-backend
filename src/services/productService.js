@@ -10,6 +10,8 @@ import {
   orderBy, 
   query 
 } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { storage } from "@/firebase/config";
 import { uploadToCloudinary, deleteFromCloudinary } from "@/actions/cloudinary";
 
 const COLLECTION_NAME = "products";
@@ -17,15 +19,41 @@ const COLLECTION_NAME = "products";
 // Helper to upload a file and get Cloudinary URL
 const uploadFile = async (file, folderPath, isRaw = false) => {
   if (!file) return null;
+
+  if (isRaw) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const finalName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
+    
+    const storageRef = ref(storage, `${folderPath}/${uniqueSuffix}-${finalName}`);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+  }
+
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("isRaw", isRaw ? "true" : "false");
+  formData.append("isRaw", "false");
   
   const result = await uploadToCloudinary(formData, folderPath);
   if (result?.error) {
     throw new Error(result.error);
   }
   return result?.url || null;
+};
+
+const deleteFile = async (url) => {
+  if (!url) return;
+  if (url.includes("firebasestorage.googleapis.com")) {
+    try {
+      // Create a reference from the download URL and delete it
+      const fileRef = ref(storage, url);
+      await deleteObject(fileRef);
+    } catch (err) {
+      console.error("Firebase Storage delete error:", err);
+    }
+  } else if (url.includes("cloudinary.com")) {
+    await deleteFromCloudinary(url);
+  }
 };
 
 const promiseWithTimeout = (promise, ms, message) => {
@@ -94,7 +122,7 @@ export const updateProduct = async (id, productData, newImageFiles, newBrochureF
 
     if (deletedImageUrls && deletedImageUrls.length > 0) {
       for (const url of deletedImageUrls) {
-        await deleteFromCloudinary(url);
+        await deleteFile(url);
       }
     }
 
@@ -110,7 +138,7 @@ export const updateProduct = async (id, productData, newImageFiles, newBrochureF
 
     if (newBrochureFile) {
       updateData.brochureUrl = await uploadFile(newBrochureFile, "product_brochures", true);
-      if (oldBrochureUrl) await deleteFromCloudinary(oldBrochureUrl);
+      if (oldBrochureUrl) await deleteFile(oldBrochureUrl);
     }
 
     const productRef = doc(db, COLLECTION_NAME, id);
@@ -132,13 +160,13 @@ export const deleteProduct = async (id, imageUrls, brochureUrl) => {
     const productRef = doc(db, COLLECTION_NAME, id);
     await deleteDoc(productRef);
 
-    // Delete files from Cloudinary
+    // Delete files
     if (imageUrls && imageUrls.length > 0) {
       for (const url of imageUrls) {
-        await deleteFromCloudinary(url);
+        await deleteFile(url);
       }
     }
-    if (brochureUrl) await deleteFromCloudinary(brochureUrl);
+    if (brochureUrl) await deleteFile(brochureUrl);
   } catch (error) {
     console.error("Error deleting product:", error);
     throw error;
