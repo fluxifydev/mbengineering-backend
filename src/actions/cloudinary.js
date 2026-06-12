@@ -20,12 +20,21 @@ export async function uploadToCloudinary(formData, folder) {
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     const resourceType = (isRaw || isPdf) ? 'raw' : 'auto';
 
+    const uploadOptions = { 
+      folder: folder,
+      resource_type: resourceType 
+    };
+
+    if (resourceType === 'raw') {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const finalName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
+      uploadOptions.public_id = `${uniqueSuffix}-${finalName}`;
+    }
+
     const url = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        { 
-          folder: folder,
-          resource_type: resourceType 
-        },
+        uploadOptions,
         (error, result) => {
           if (error) {
             reject(error);
@@ -49,6 +58,7 @@ export async function deleteFromCloudinary(url) {
   if (!url) return;
   
   try {
+    const isRaw = url.includes('/raw/upload/');
     const parts = url.split('/');
     // e.g. https://res.cloudinary.com/die125cwk/image/upload/v1234/folder/file.jpg
     const uploadIndex = parts.indexOf('upload');
@@ -59,10 +69,11 @@ export async function deleteFromCloudinary(url) {
     // so we skip the version string by taking uploadIndex + 2
     const folderAndFile = parts.slice(uploadIndex + 2).join('/');
     
-    // Remove the file extension
-    const publicId = folderAndFile.split('.').slice(0, -1).join('.');
+    // For images, Cloudinary destroy expects public_id without extension
+    // For raw files, Cloudinary destroy expects public_id WITH extension
+    const publicId = isRaw ? folderAndFile : folderAndFile.split('.').slice(0, -1).join('.');
     
-    await cloudinary.uploader.destroy(publicId);
+    await cloudinary.uploader.destroy(publicId, { resource_type: isRaw ? 'raw' : 'image' });
   } catch (error) {
     console.error("Cloudinary delete error:", error);
   }
