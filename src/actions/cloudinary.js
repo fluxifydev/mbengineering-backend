@@ -10,14 +10,14 @@ cloudinary.config({
 
 export async function uploadToCloudinary(formData, folder) {
   try {
-    const file = formData.get('file');
-    if (!file) return { error: "No file provided" };
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const dataUri = formData.get('dataUri');
+    const fileName = formData.get('fileName') || 'upload';
+    const fileType = formData.get('fileType') || '';
+    
+    if (!dataUri) return { error: "No file provided" };
 
     const isRaw = formData.get("isRaw") === "true";
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isPdf = fileType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
     const resourceType = (isRaw || isPdf) ? 'raw' : 'auto';
 
     const uploadOptions = { 
@@ -26,14 +26,15 @@ export async function uploadToCloudinary(formData, folder) {
     };
 
     if (resourceType === 'raw') {
-      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const safeName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       const finalName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
       uploadOptions.public_id = `${uniqueSuffix}-${finalName}`;
     }
 
     const url = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
+      cloudinary.uploader.upload(
+        dataUri,
         uploadOptions,
         (error, result) => {
           if (error) {
@@ -43,8 +44,6 @@ export async function uploadToCloudinary(formData, folder) {
           }
         }
       );
-      
-      uploadStream.end(buffer);
     });
 
     return { url };
