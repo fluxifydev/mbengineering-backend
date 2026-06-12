@@ -103,12 +103,20 @@ export const addProduct = async (productData, imageFiles, brochureFile) => {
 
 export const getProducts = async () => {
   try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy("createdAt", "desc"));
+    const q = query(collection(db, COLLECTION_NAME));
     const querySnapshot = await getDocs(q);
     const products = [];
     querySnapshot.forEach((doc) => {
       products.push({ id: doc.id, ...doc.data() });
     });
+    
+    // Sort client-side to avoid Firebase missing index errors
+    products.sort((a, b) => {
+      const timeA = a.createdAt?.seconds || 0;
+      const timeB = b.createdAt?.seconds || 0;
+      return timeB - timeA;
+    });
+    
     return products;
   } catch (error) {
     console.error("Error getting products:", error);
