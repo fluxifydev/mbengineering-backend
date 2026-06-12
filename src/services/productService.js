@@ -22,6 +22,13 @@ const uploadFile = async (file, folderPath) => {
   return await uploadToCloudinary(formData, folderPath);
 };
 
+const promiseWithTimeout = (promise, ms, message) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+  ]);
+};
+
 export const addProduct = async (productData, imageFile, brochureFile) => {
   try {
     let imageUrl = null;
@@ -34,12 +41,18 @@ export const addProduct = async (productData, imageFile, brochureFile) => {
       brochureUrl = await uploadFile(brochureFile, "product_brochures");
     }
 
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docPromise = addDoc(collection(db, COLLECTION_NAME), {
       ...productData,
       imageUrl,
       brochureUrl,
       createdAt: serverTimestamp(),
     });
+
+    const docRef = await promiseWithTimeout(
+      docPromise, 
+      8000, 
+      "Firebase Database not found or unreachable. Please ensure you have created the Firestore Database in your Firebase Console."
+    );
 
     return docRef.id;
   } catch (error) {
@@ -78,7 +91,13 @@ export const updateProduct = async (id, productData, newImageFile, newBrochureFi
     }
 
     const productRef = doc(db, COLLECTION_NAME, id);
-    await updateDoc(productRef, updateData);
+    const updatePromise = updateDoc(productRef, updateData);
+    
+    await promiseWithTimeout(
+      updatePromise,
+      8000,
+      "Firebase Database not found or unreachable. Please ensure you have created the Firestore Database in your Firebase Console."
+    );
   } catch (error) {
     console.error("Error updating product:", error);
     throw error;
