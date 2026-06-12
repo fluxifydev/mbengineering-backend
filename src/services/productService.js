@@ -8,9 +8,9 @@ import {
   deleteDoc, 
   serverTimestamp, 
   orderBy, 
-  query 
 } from "firebase/firestore";
 import { uploadToCloudinary, deleteFromCloudinary } from "@/actions/cloudinary";
+import { uploadToFirebaseServerAction, deleteFromFirebaseServerAction } from "@/actions/firebase";
 
 const COLLECTION_NAME = "products";
 
@@ -30,11 +30,19 @@ const uploadFile = async (file, folderPath, isRaw = false) => {
 
       const dataUri = await fileToDataUri(file);
 
+      if (isRaw) {
+        const result = await uploadToFirebaseServerAction(dataUri, folderPath, file.name);
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+        return result?.url || null;
+      }
+
       const formData = new FormData();
       formData.append("dataUri", dataUri);
       formData.append("fileName", file.name);
       formData.append("fileType", file.type);
-      formData.append("isRaw", isRaw ? "true" : "false");
+      formData.append("isRaw", "false");
       
       const result = await uploadToCloudinary(formData, folderPath);
       if (result?.error) {
@@ -51,7 +59,11 @@ const deleteFile = async (url) => {
   if (!url) return;
   return await promiseWithTimeout(
     (async () => {
-      await deleteFromCloudinary(url);
+      if (url.includes("firebasestorage.googleapis.com")) {
+        await deleteFromFirebaseServerAction(url);
+      } else if (url.includes("cloudinary.com")) {
+        await deleteFromCloudinary(url);
+      }
     })(),
     30000,
     "File deletion timed out."
