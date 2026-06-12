@@ -1,15 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { X, UploadCloud } from "lucide-react";
+import { X, UploadCloud, Plus, Trash2 } from "lucide-react";
 import { updateProduct } from "@/services/productService";
 
 export default function EditProductModal({ product, onClose, onSave }) {
   const [name, setName] = useState(product.name || "");
   const [description, setDescription] = useState(product.description || "");
-  const [specifications, setSpecifications] = useState(product.specifications || "");
+  const [specifications, setSpecifications] = useState(
+    Array.isArray(product.specifications) 
+      ? (product.specifications.length > 0 ? product.specifications : [{ key: "", value: "" }]) 
+      : [{ key: "", value: "" }]
+  );
   
   const [imageFile, setImageFile] = useState(null);
+
+  const handleAddSpec = () => {
+    if (specifications.length < 18) {
+      setSpecifications([...specifications, { key: "", value: "" }]);
+    }
+  };
+
+  const handleRemoveSpec = (index) => {
+    const newSpecs = [...specifications];
+    newSpecs.splice(index, 1);
+    setSpecifications(newSpecs);
+  };
+
+  const handleSpecChange = (index, field, val) => {
+    const newSpecs = [...specifications];
+    newSpecs[index][field] = val;
+    setSpecifications(newSpecs);
+  };
   const [brochureFile, setBrochureFile] = useState(null);
   
   const [loading, setLoading] = useState(false);
@@ -21,9 +43,10 @@ export default function EditProductModal({ product, onClose, onSave }) {
     setError("");
 
     try {
+      const cleanedSpecs = specifications.filter(s => s.key.trim() !== "" || s.value.trim() !== "");
       await updateProduct(
         product.id,
-        { name, description, specifications },
+        { name, description, specifications: cleanedSpecs },
         imageFile,
         brochureFile,
         product.imageUrl,
@@ -76,14 +99,54 @@ export default function EditProductModal({ product, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Specifications</label>
-            <textarea
-              rows={4}
-              value={specifications}
-              onChange={(e) => setSpecifications(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 resize-none"
-              placeholder="e.g. Dimensions, Power, Capacity..."
-            />
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-sm font-semibold text-gray-700">Specifications</label>
+              <span className="text-xs text-gray-500">{specifications.length} / 18</span>
+            </div>
+            <div className="space-y-3">
+              {specifications.map((spec, index) => (
+                <div key={index} className="flex space-x-3 items-start">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={spec.key}
+                      onChange={(e) => handleSpecChange(index, "key", e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 text-sm"
+                      placeholder="e.g. Max Web Width"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={spec.value}
+                      onChange={(e) => handleSpecChange(index, "value", e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 text-sm"
+                      placeholder="e.g. 1300 mm"
+                    />
+                  </div>
+                  {specifications.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSpec(index)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-0.5"
+                      title="Remove specification"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {specifications.length < 18 && (
+              <button
+                type="button"
+                onClick={handleAddSpec}
+                className="mt-3 flex items-center text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                <Plus size={16} className="mr-1" />
+                Add Specification
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
