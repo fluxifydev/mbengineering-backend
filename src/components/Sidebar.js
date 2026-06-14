@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { LayoutDashboard, LogOut, PackagePlus, X, FolderTree } from "lucide-react";
+import { LayoutDashboard, LogOut, PackagePlus, X, FolderTree, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -17,6 +17,7 @@ export default function Sidebar({ closeMobileMenu }) {
     { name: "Products", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
     { name: "Add Product", icon: <PackagePlus size={20} />, path: "/dashboard/add" },
     { name: "Categories", icon: <FolderTree size={20} />, path: "/dashboard/categories" },
+    { name: "Blogs", icon: <BookOpen size={20} />, path: "/dashboard/blogs" },
   ];
 
   return (
