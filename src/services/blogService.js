@@ -15,14 +15,30 @@ import { uploadToCloudinary, deleteFromCloudinary } from "@/actions/cloudinary";
 
 const COLLECTION_NAME = "blogs";
 
-// Upload cover image to Cloudinary (Base64 approach similar to products)
+const fileToDataUri = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
 const uploadCoverImage = async (file) => {
   if (!file) return null;
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const base64String = `data:${file.type};base64,${buffer.toString("base64")}`;
-  const uploadResult = await uploadToCloudinary(base64String, "blogs");
-  return uploadResult.secure_url;
+  
+  const dataUri = await fileToDataUri(file);
+  
+  const formData = new FormData();
+  formData.append("dataUri", dataUri);
+  formData.append("fileName", file.name);
+  formData.append("fileType", file.type);
+  
+  const uploadResult = await uploadToCloudinary(formData, "blogs");
+  if (uploadResult?.error) {
+    throw new Error(uploadResult.error);
+  }
+  return uploadResult?.url || null;
 };
 
 // Add a new blog
