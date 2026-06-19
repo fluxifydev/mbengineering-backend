@@ -5,6 +5,8 @@ import { updateBanner } from "@/services/bannerService";
 export default function EditBannerModal({ banner, onClose, onSave }) {
   const [heading, setHeading] = useState("");
   const [description, setDescription] = useState("");
+  const [buttonText, setButtonText] = useState("");
+  const [buttonLink, setButtonLink] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [existingImageUrl, setExistingImageUrl] = useState("");
   
@@ -15,6 +17,8 @@ export default function EditBannerModal({ banner, onClose, onSave }) {
     if (banner) {
       setHeading(banner.heading || "");
       setDescription(banner.description || "");
+      setButtonText(banner.buttonText || "Explore Machines");
+      setButtonLink(banner.buttonLink || "/products");
       setExistingImageUrl(banner.imageUrl || "");
     }
   }, [banner]);
@@ -55,7 +59,7 @@ export default function EditBannerModal({ banner, onClose, onSave }) {
       
       await updateBanner(
         banner.id,
-        { heading, description },
+        { heading, description, buttonText, buttonLink },
         imageFile,
         banner.imageUrl,
         deleteOldImage
@@ -122,6 +126,31 @@ export default function EditBannerModal({ banner, onClose, onSave }) {
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-900 resize-none"
               placeholder="From personalized engineering consultation to seamless onsite integration..."
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Button Text</label>
+              <input
+                type="text"
+                required
+                value={buttonText}
+                onChange={(e) => setButtonText(e.target.value)}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-900"
+                placeholder="e.g. Explore Machines"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Button Link / URL</label>
+              <input
+                type="text"
+                required
+                value={buttonLink}
+                onChange={(e) => setButtonLink(e.target.value)}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-900"
+                placeholder="e.g. /products or https://..."
+              />
+            </div>
           </div>
 
           <div>

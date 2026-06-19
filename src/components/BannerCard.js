@@ -24,9 +24,14 @@ export default function BannerCard({ banner, onEdit, onDelete, index }) {
             <h3 className="text-white text-lg sm:text-xl font-bold mb-2 leading-tight line-clamp-2">
               {banner.heading}
             </h3>
-            <p className="text-blue-50 text-xs sm:text-sm line-clamp-3 opacity-90 leading-relaxed">
+            <p className="text-blue-50 text-xs sm:text-sm line-clamp-3 opacity-90 leading-relaxed mb-3">
               {banner.description}
             </p>
+            {(banner.buttonText || banner.buttonLink) && (
+              <span className="inline-block bg-white/20 backdrop-blur-md border border-white/30 text-white text-[10px] font-semibold px-2 py-1 rounded truncate max-w-full">
+                🔗 {banner.buttonText || "Explore Machines"} → {banner.buttonLink || "/products"}
+              </span>
+            )}
           </div>
         </div>
 
